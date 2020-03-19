@@ -12,6 +12,13 @@ public class GetDispather {
     String[] paramterNames;      //方法参数名称
     Class<?>[] parameterClasses; //方法参数类型
 
+    public GetDispather(Object instance, Method method, String[] parameterNames, Class<?>[] parameterClasses) {
+        super();
+        this.instance = instance;
+        this.method = method;
+        this.paramterNames = parameterNames;
+        this.parameterClasses = parameterClasses;
+    }
 
     //通过构造某个方法需要的所有参数列表，使用反射调用该方法后返回结果
     public ModelAndView invoke(HttpServletRequest request, HttpServletResponse response) throws InvocationTargetException, IllegalAccessException {

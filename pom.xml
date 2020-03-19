@@ -6,6 +6,7 @@
 
     <groupId>com.zhengj.learnjava</groupId>
     <artifactId>SimpleMVC</artifactId>
+    <packaging>war</packaging>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
@@ -32,4 +33,8 @@
             <version>${pebble.version}</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <finalName>MVC</finalName>
+    </build>
 </project>

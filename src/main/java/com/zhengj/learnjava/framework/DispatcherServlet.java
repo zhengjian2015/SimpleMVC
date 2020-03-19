@@ -1,15 +1,19 @@
 package com.zhengj.learnjava.framework;
 
+import com.zhengj.learnjava.controller.IndexController;
+import com.zhengj.learnjava.controller.UserController;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.reflect.Method;
+import java.util.*;
 
 /**
  * 创建一个接收所有请求的Servlet，通常我们把它命名为DispatcherServlet，
@@ -22,6 +26,63 @@ public class DispatcherServlet extends HttpServlet {
     private Map<String,GetDispather> getMappings = new HashMap<>();
     private Map<String,PostDispather> postMappings = new HashMap<>();
     private ViewEngine viewEngine;
+
+
+    // TODO: 可指定package并自动扫描:
+    private List<Class<?>> controllers = Arrays.asList(IndexController.class, UserController.class);
+
+
+    private static final Set<Class<?>> supportedGetParameterTypes =
+            new HashSet<Class<?>>(){{
+                add(int.class);
+                add(long.class);
+                add(boolean.class);
+                add(String.class);
+                add(HttpServletRequest.class);
+                add(HttpServletResponse.class);
+                add(HttpSession.class);
+            }};
+
+    /**
+     * 当Servlet容器创建当前Servlet实例后，会自动调用init(ServletConfig)方法
+     */
+    @Override
+    public void init() throws ServletException {
+        System.out.println("init 开始 "+ getClass().getSimpleName() + "...");
+        // 依次处理每个Controller:
+        for (Class<?> controllerClass : controllers) {
+            try {
+                Object controllerInstance = controllerClass.getConstructor().newInstance();
+                //处理每个Method
+                for(Method method : controllerClass.getMethods()) {
+                    if(method.getAnnotation(GetMapping.class) != null) {
+                        // 处理@Get:
+                        if (method.getReturnType() != ModelAndView.class && method.getReturnType() != void.class) {
+                            throw new UnsupportedOperationException(
+                                    "Unsupported return type: " + method.getReturnType() + " for method: " + method);
+                        }
+                        for(Class<?> parameterClass : method.getParameterTypes()) {
+                            if (!supportedGetParameterTypes.contains(parameterClass)) {
+                                throw new UnsupportedOperationException(
+                                        "Unsupported parameter type: " + parameterClass + " for method: " + method);
+                            }
+                        }
+                        String[] parameterNames = Arrays.stream(method.getParameters()).map(p -> p.getName())
+                                .toArray(String[]::new);
+                        String path = method.getAnnotation(GetMapping.class).value();
+                        System.out.printf("Found GET: %s => %s", path, method);
+                        System.out.println();
+                        this.getMappings.put(path, new GetDispather(controllerInstance, method, parameterNames,
+                                method.getParameterTypes()));
+                    }
+                }
+            }catch (ReflectiveOperationException e) {
+                throw new ServletException(e);
+            }
+        }
+        // 创建ViewEngine:
+        this.viewEngine = new ViewEngine(getServletContext());
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
