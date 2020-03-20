@@ -70,8 +70,9 @@ public class DispatcherServlet extends HttpServlet {
                         String[] parameterNames = Arrays.stream(method.getParameters()).map(p -> p.getName())
                                 .toArray(String[]::new);
                         String path = method.getAnnotation(GetMapping.class).value();
+                        System.out.println("每个方法的变量名"+paramsTosString(parameterNames));
                         System.out.printf("Found GET: %s => %s", path, method);
-                        System.out.println();
+                        System.out.println("--------------");
                         this.getMappings.put(path, new GetDispather(controllerInstance, method, parameterNames,
                                 method.getParameterTypes()));
                     }
@@ -89,6 +90,7 @@ public class DispatcherServlet extends HttpServlet {
         resp.setContentType("text/html");
         resp.setCharacterEncoding("UTF-8");
         String path = req.getRequestURI().substring(req.getContextPath().length());
+        System.out.println("路径查找...."+path);
         //根据路径查找GetDispathcer
         GetDispather dispather = this.getMappings.get(path);
         if(dispather == null) {
@@ -107,14 +109,26 @@ public class DispatcherServlet extends HttpServlet {
         if(mv == null) {
             return;
         }
+        System.out.println("mv.view是 "+mv.view);
         // 允许返回`redirect:`开头的view表示重定向:
         if (mv.view.startsWith("redirect:")) {
+            System.out.println("这里进来了");
+            System.out.println(mv.view);
             resp.sendRedirect(mv.view.substring(9));
             return;
         }
+        System.out.println("return后有执行吗");
         // 将模板引擎渲染的内容写入响应:
         PrintWriter pw = resp.getWriter();
         this.viewEngine.render(mv, pw);
         pw.flush();
+    }
+
+    private String paramsTosString(String[] paramsters) {
+        StringJoiner sj = new StringJoiner(", ");
+        for (String s:paramsters) {
+            sj.add(s);
+        }
+        return sj.toString();
     }
 }

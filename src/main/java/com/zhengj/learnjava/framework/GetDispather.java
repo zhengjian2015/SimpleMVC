@@ -27,6 +27,8 @@ public class GetDispather {
             //方法参数对应一个参数名称 共用一个变量i
             String parameterName = paramterNames[i];
             Class<?> parameterClass = parameterClasses[i];
+            System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx33");
+            System.out.println(parameterClass);
             if (parameterClass == HttpServletRequest.class) {
                 arguments[i] = request;
             } else if (parameterClass == HttpServletResponse.class) {
